@@ -3,6 +3,5 @@ pandas
 supabase
 pypdf
 groq
-python-jobspy
 python-dotenv
 requests
