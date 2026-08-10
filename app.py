@@ -473,10 +473,13 @@ elif page == "💼 AI Job Hub":
                         st.error("Please fill in Job Title and Company.")
 
         if run_scrape:
-            # Safely fetch the RapidAPI key
+            # Safely fetch the RapidAPI key and strip any accidental hidden spaces
             rapid_key = os.getenv("RAPIDAPI_KEY", "")
             if not rapid_key and hasattr(st, "secrets") and "RAPIDAPI_KEY" in st.secrets:
                 rapid_key = st.secrets["RAPIDAPI_KEY"]
+            
+            # This line cleans the key of any accidental spaces from your .env file
+            rapid_key = rapid_key.strip()
                 
             roles_to_scrape = [r.strip() for r in re.split(r'[,\n]+', edited_roles_input) if r.strip()]
             
@@ -493,20 +496,24 @@ elif page == "💼 AI Job Hub":
                     for i, role in enumerate(roles_to_scrape):
                         progress_text.text(f"Fetching API data for: {role} ({i+1}/{len(roles_to_scrape)})")
                         
-                        url = "[https://jsearch.p.rapidapi.com/search](https://jsearch.p.rapidapi.com/search)"
+                        # Hand-typed clean URL to prevent invisible copy-paste characters
+                        url = "https://jsearch.p.rapidapi.com/search"
+                        
                         querystring = {
                             "query": f"{role} in {country}",
                             "page": "1",
                             "num_pages": "1",
                             "date_posted": "week" 
                         }
+                        
                         headers = {
                             "X-RapidAPI-Key": rapid_key,
                             "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
                         }
 
                         try:
-                            response = requests.get(url, headers=headers, params=querystring)
+                            # Added a 15-second timeout so it never hangs indefinitely
+                            response = requests.get(url, headers=headers, params=querystring, timeout=15)
                             response.raise_for_status()
                             data = response.json()
                             
@@ -558,7 +565,7 @@ elif page == "💼 AI Job Hub":
                         st.success(f"Successfully extracted {len(combined_jobs)} jobs via JSearch API!")
                     else:
                         progress_text.text("Extraction Complete.")
-                        st.error("API call succeeded but returned 0 jobs matching your specific criteria/age restriction.")
+                        st.error("Could not extract any jobs. The API call failed or returned 0 matches for your criteria.")
 
         # Display Extracted Jobs Table
         if "jobs_df" in st.session_state and st.session_state.jobs_df is not None and not st.session_state.jobs_df.empty:
