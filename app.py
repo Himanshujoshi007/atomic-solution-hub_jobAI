@@ -3,13 +3,13 @@ import pandas as pd
 from supabase import create_client, Client
 import pypdf
 from groq import Groq
-from jobspy import scrape_jobs
 import json
 import re
 from datetime import datetime
 import time
 import os
 from dotenv import load_dotenv
+import requests
 
 # Load local .env file if it exists
 load_dotenv()
@@ -212,7 +212,7 @@ for key in ["authenticated", "username", "is_admin", "resume_text", "ai_roles", 
     if key not in st.session_state:
         st.session_state[key] = False if key in ["authenticated", "is_admin"] else None
 
-# Securely load Groq Key from Environment Variable (.env) or Streamlit Secrets
+# Securely load API Keys from Environment Variable (.env) or Streamlit Secrets
 if "groq_key" not in st.session_state:
     env_key = os.getenv("GROQ_API_KEY", "")
     if not env_key and hasattr(st, "secrets") and "GROQ_API_KEY" in st.secrets:
@@ -349,7 +349,7 @@ if page == "👑 Admin Panel":
         else:
             st.error("API key cannot be empty.")
 
-# --- 5. AI JOB HUB PAGE ---
+# --- 5. AI JOB Hub PAGE ---
 elif page == "💼 AI Job Hub":
     
     app_tab1, app_tab2, app_tab3, app_tab4 = st.tabs([
@@ -424,7 +424,7 @@ elif page == "💼 AI Job Hub":
                     except Exception as e:
                         st.error(f"Error during AI parsing: {e}")
 
-    # --- TAB 2: JOB EXTRACTOR & SOURCE CLASSIFIER ---
+    # --- TAB 2: JOB EXTRACTOR & SOURCE CLASSIFIER (JSEARCH API) ---
     with app_tab2:
         st.markdown("### Target Roles & Job Extraction Engine")
         
@@ -440,16 +440,16 @@ elif page == "💼 AI Job Hub":
         with c2:
             country = st.selectbox("Country", ["USA", "Canada"])
         with c3:
-            max_limit = st.number_input("Max Jobs (Total across all roles)", min_value=1, max_value=300, value=50)
-            max_hours = st.number_input("Max Age (Hours)", min_value=1, max_value=72, value=32)
+            max_limit = st.number_input("Max Jobs per Role (Keep low on free tier)", min_value=1, max_value=20, value=5)
+            max_hours = st.number_input("Max Age (Hours)", min_value=1, max_value=168, value=72)
 
         col_scrape, col_manual = st.columns(2)
         
         with col_scrape:
-            run_scrape = st.button("🚀 Scrape Live Jobs", type="primary", use_container_width=True)
+            run_scrape = st.button("🚀 Scrape Live Jobs (Via API)", type="primary", use_container_width=True)
             
         with col_manual:
-            with st.expander("➕ Add Job Manually (Cloud Bypass)"):
+            with st.expander("➕ Add Job Manually"):
                 manual_title = st.text_input("Job Title")
                 manual_company = st.text_input("Company")
                 manual_location = st.text_input("Location", value="Remote / USA")
@@ -459,15 +459,9 @@ elif page == "💼 AI Job Hub":
                 if st.button("Add to Job List"):
                     if manual_title and manual_company:
                         new_row = pd.DataFrame([{
-                            'title': manual_title,
-                            'company': manual_company,
-                            'location': manual_location,
-                            'Source': 'Manual Entry',
-                            'Match %': 85,
-                            'Posted Age': 'Just Added',
-                            'Age_Hours': 0,
-                            'Apply Link': manual_url,
-                            'description': manual_desc if manual_desc else "General software engineering role requirements."
+                            'title': manual_title, 'company': manual_company, 'location': manual_location,
+                            'Source': 'Manual Entry', 'Match %': 85, 'Posted Age': 'Just Added',
+                            'Age_Hours': 0, 'Apply Link': manual_url, 'description': manual_desc or "Manual entry description."
                         }])
                         if "jobs_df" in st.session_state and st.session_state.jobs_df is not None and not st.session_state.jobs_df.empty:
                             st.session_state.jobs_df = pd.concat([st.session_state.jobs_df, new_row], ignore_index=True)
@@ -479,72 +473,92 @@ elif page == "💼 AI Job Hub":
                         st.error("Please fill in Job Title and Company.")
 
         if run_scrape:
+            # Safely fetch the RapidAPI key
+            rapid_key = os.getenv("RAPIDAPI_KEY", "")
+            if not rapid_key and hasattr(st, "secrets") and "RAPIDAPI_KEY" in st.secrets:
+                rapid_key = st.secrets["RAPIDAPI_KEY"]
+                
             roles_to_scrape = [r.strip() for r in re.split(r'[,\n]+', edited_roles_input) if r.strip()]
             
-            if not roles_to_scrape:
+            if not rapid_key:
+                st.error("⚠️ RAPIDAPI_KEY is missing. Please add it to your .env file or Streamlit Secrets.")
+            elif not roles_to_scrape:
                 st.warning("Please enter at least one Job Role to search for.")
             else:
-                with st.spinner(f"Scraping jobs for {len(roles_to_scrape)} roles in {country}..."):
-                    try:
-                        all_jobs_list = []
-                        fetch_limit = max(5, int((max_limit / len(roles_to_scrape)) * 2)) 
+                with st.spinner(f"Querying JSearch API for {len(roles_to_scrape)} roles in {country}..."):
+                    all_jobs_list = []
+                    progress_text = st.empty()
+                    progress_bar = st.progress(0)
+                    
+                    for i, role in enumerate(roles_to_scrape):
+                        progress_text.text(f"Fetching API data for: {role} ({i+1}/{len(roles_to_scrape)})")
                         
-                        progress_text = st.empty()
-                        progress_bar = st.progress(0)
-                        
-                        for i, role in enumerate(roles_to_scrape):
-                            progress_text.text(f"Searching job boards for: {role} ({i+1}/{len(roles_to_scrape)})")
-                            try:
-                                # Restricted to Indeed to minimize datacenter IP blocks
-                                jobs = scrape_jobs(
-                                    site_name=["indeed"],
-                                    search_term=role,
-                                    location=country,
-                                    results_wanted=fetch_limit,
-                                    country_indeed=country.lower()
-                                )
-                                
-                                if not jobs.empty:
-                                    all_jobs_list.append(jobs)
-                            except Exception as e:
-                                st.toast(f"Notice for '{role}': {e}")
-                            
-                            progress_bar.progress((i + 1) / len(roles_to_scrape))
-                            time.sleep(1)
-                            
-                        if all_jobs_list:
-                            combined_jobs = pd.concat(all_jobs_list, ignore_index=True)
-                            
-                            if 'title' in combined_jobs.columns and 'company' in combined_jobs.columns:
-                                combined_jobs = combined_jobs.drop_duplicates(subset=['title', 'company'], keep='first')
-                            
-                            combined_jobs['Age_Hours'] = 1.0
-                            combined_jobs['Posted Age'] = "Recent"
+                        url = "[https://jsearch.p.rapidapi.com/search](https://jsearch.p.rapidapi.com/search)"
+                        querystring = {
+                            "query": f"{role} in {country}",
+                            "page": "1",
+                            "num_pages": "1",
+                            "date_posted": "week" 
+                        }
+                        headers = {
+                            "X-RapidAPI-Key": rapid_key,
+                            "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
+                        }
 
-                            def calculate_match_percentage(desc):
-                                desc_lower = str(desc).lower()
-                                skills = st.session_state.ai_key_skills
-                                if not skills: return 75
-                                matches = sum(1 for s in skills if s.lower() in desc_lower)
-                                base_score = int((matches / len(skills)) * 100)
-                                return min(99, max(60, base_score + 15))
-                                
-                            combined_jobs['Match %'] = combined_jobs['description'].apply(calculate_match_percentage)
-                            combined_jobs['Source'] = 'Indeed (Live)'
+                        try:
+                            response = requests.get(url, headers=headers, params=querystring)
+                            response.raise_for_status()
+                            data = response.json()
                             
-                            if 'job_url_direct' in combined_jobs.columns:
-                                combined_jobs['Apply Link'] = combined_jobs['job_url_direct'].fillna(combined_jobs['job_url'])
-                            else:
-                                combined_jobs['Apply Link'] = combined_jobs['job_url']
+                            jobs_data = data.get('data', [])
+                            for job in jobs_data[:int(max_limit)]:
+                                age_hours = 0
+                                posted_str = "Recent"
+                                try:
+                                    posted_dt = pd.to_datetime(job.get('job_posted_at_datetime_utc'))
+                                    if pd.notnull(posted_dt):
+                                        now = pd.Timestamp.now(tz='UTC')
+                                        age_hours = (now - posted_dt).total_seconds() / 3600
+                                        posted_str = f"{age_hours:.1f} hrs ago"
+                                except Exception:
+                                    pass
+
+                                if age_hours <= max_hours:
+                                    all_jobs_list.append({
+                                        'title': job.get('job_title', 'Unknown Title'),
+                                        'company': job.get('employer_name', 'Unknown Company'),
+                                        'location': f"{job.get('job_city', '')}, {job.get('job_country', '')}".strip(', '),
+                                        'Source': job.get('job_publisher', 'Google Jobs'),
+                                        'Age_Hours': age_hours,
+                                        'Posted Age': posted_str,
+                                        'Apply Link': job.get('job_apply_link', ''),
+                                        'description': job.get('job_description', '')
+                                    })
+                        except Exception as e:
+                            st.toast(f"Failed to fetch '{role}' via API: {e}")
+
+                        progress_bar.progress((i + 1) / len(roles_to_scrape))
+                        time.sleep(1.5) 
+
+                    if all_jobs_list:
+                        combined_jobs = pd.DataFrame(all_jobs_list)
+                        
+                        def calculate_match_percentage(desc):
+                            desc_lower = str(desc).lower()
+                            skills = st.session_state.ai_key_skills
+                            if not skills: return 75
+                            matches = sum(1 for s in skills if s.lower() in desc_lower)
+                            base_score = int((matches / len(skills)) * 100)
+                            return min(99, max(60, base_score + 15))
                             
-                            st.session_state.jobs_df = combined_jobs[['title', 'company', 'location', 'Source', 'Match %', 'Posted Age', 'Age_Hours', 'Apply Link', 'description']]
-                            progress_text.text("Extraction Complete!")
-                            st.success(f"Extracted {len(combined_jobs)} job listings successfully!")
-                        else:
-                            progress_text.text("Extraction Complete.")
-                            st.error("Cloud firewall blocked live scraping. Use the '➕ Add Job Manually' option above to instantly input jobs and test all app features.")
-                    except Exception as e:
-                        st.error(f"Scraping error: {e}. Use 'Add Job Manually' as a fallback.")
+                        combined_jobs['Match %'] = combined_jobs['description'].apply(calculate_match_percentage)
+                        
+                        st.session_state.jobs_df = combined_jobs[['title', 'company', 'location', 'Source', 'Match %', 'Posted Age', 'Age_Hours', 'Apply Link', 'description']]
+                        progress_text.text("API Extraction Complete!")
+                        st.success(f"Successfully extracted {len(combined_jobs)} jobs via JSearch API!")
+                    else:
+                        progress_text.text("Extraction Complete.")
+                        st.error("API call succeeded but returned 0 jobs matching your specific criteria/age restriction.")
 
         # Display Extracted Jobs Table
         if "jobs_df" in st.session_state and st.session_state.jobs_df is not None and not st.session_state.jobs_df.empty:
@@ -573,7 +587,20 @@ elif page == "💼 AI Job Hub":
                         except Exception as e:
                             st.error(f"Failed to save: {e}")
             
+            sort_col, _ = st.columns([1, 2])
+            with sort_col:
+                sort_jobs_by = st.selectbox("Sort Jobs By:", ["Highest Match %", "Newest First (Age)", "Oldest First", "Job Title (A-Z)"])
+            
             df_display = st.session_state.jobs_df.copy()
+            if sort_jobs_by == "Highest Match %":
+                df_display = df_display.sort_values(by="Match %", ascending=False)
+            elif sort_jobs_by == "Newest First (Age)":
+                df_display = df_display.sort_values(by="Age_Hours", ascending=True)
+            elif sort_jobs_by == "Oldest First":
+                df_display = df_display.sort_values(by="Age_Hours", ascending=False)
+            elif sort_jobs_by == "Job Title (A-Z)":
+                df_display = df_display.sort_values(by="title", ascending=True)
+                
             df_display['Match %'] = df_display['Match %'].astype(str) + "%"
 
             st.dataframe(
