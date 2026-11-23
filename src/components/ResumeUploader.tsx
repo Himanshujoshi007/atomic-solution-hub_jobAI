@@ -305,7 +305,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
 
           <textarea
             rows={10}
-            placeholder={`Paste your entire resume here...\n\nExample:\nVaibhav Suresh Chaudhari\nMechanical Design Engineer\nvaibhavsuresh31@gmail.com | (203) 823-3634 | USA | LinkedIn\n\nSummary\nMechanical Design Engineer with 4+ years of experience...\n\nTechnical Skills\n• CAD Tools: PTC Creo, UG NX, SOLIDWORKS...\n\nProfessional Experience\nMechanical Design Engineer, GMB North America Jul 2024 – Present | NJ, USA\n• Designed precision gearboxes...`}
+            placeholder={`Paste your entire resume here (plain text or markdown)...\n\nExample Format:\nFirstname Lastname\nTarget Job Role Title\nemail@example.com | (555) 012-3456 | City, Country | linkedin.com/in/profile\n\nSummary\nResults-driven professional with 5+ years of experience delivering high-impact solutions, collaborating across cross-functional teams, and driving operational excellence...\n\nTechnical Skills\n• Core Competencies: Python, SQL, Cloud Platforms, System Architecture, Agile/Scrum...\n\nProfessional Experience\nAcme Solutions, Inc. — Senior Engineer | Jan 2022 – Present\n• Led cross-functional initiatives improving system throughput by 35% across 50,000 active users.\n• Engineered scalable data pipelines resulting in 20% reduction in processing latency.\n\nEducation\nState University — Bachelor of Science in Engineering | 2017 – 2021`}
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             className="w-full p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 font-mono leading-relaxed"
@@ -524,7 +524,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                       type="text"
                       value={group.skills}
                       onChange={(e) => handleUpdateSkillGroup(idx, "skills", e.target.value)}
-                      placeholder="Comma-separated skills (e.g. PTC Creo, SOLIDWORKS, ANSYS)"
+                      placeholder="Comma-separated skills (e.g. Python, SQL, Docker, AWS)"
                       className="w-full sm:flex-1 px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300"
                     />
                     <button
@@ -602,7 +602,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                             type="text"
                             value={exp.role}
                             onChange={(e) => handleUpdateExperience(expIdx, "role", e.target.value)}
-                            placeholder="e.g. Mechanical Design Engineer"
+                            placeholder="e.g. Senior Software Engineer / Product Manager"
                             className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-zinc-900 dark:text-white"
                           />
                         </div>
@@ -612,7 +612,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                             type="text"
                             value={exp.company}
                             onChange={(e) => handleUpdateExperience(expIdx, "company", e.target.value)}
-                            placeholder="e.g. GMB North America, Inc."
+                            placeholder="e.g. Acme Corporation, Inc."
                             className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-indigo-600 dark:text-indigo-400"
                           />
                         </div>
@@ -734,7 +734,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                           type="text"
                           value={edu.degree}
                           onChange={(e) => handleUpdateEducation(eduIdx, "degree", e.target.value)}
-                          placeholder="e.g. Master of Science in Mechanical Engineering"
+                          placeholder="e.g. Bachelor of Science in Computer Science"
                           className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-zinc-900 dark:text-white"
                         />
                       </div>
@@ -744,7 +744,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                           type="text"
                           value={edu.institution}
                           onChange={(e) => handleUpdateEducation(eduIdx, "institution", e.target.value)}
-                          placeholder="e.g. Rowan University, Glassboro, USA"
+                          placeholder="e.g. State University, City, Country"
                           className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200"
                         />
                       </div>

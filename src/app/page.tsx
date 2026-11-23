@@ -104,15 +104,9 @@ export default function Home() {
     const savedRecords = storage.getRecords();
     setRecords(savedRecords);
 
-    // Clean up any stale Alluri Sumanth profile from localStorage if present
+    // Ensure clean default: remove any stale cached base resume from prior sessions
     try {
-      const savedBase = storage.getBaseResume();
-      if (savedBase) {
-        const parsed = JSON.parse(savedBase);
-        if (parsed?.fullName === "Alluri Sumanth") {
-          localStorage.removeItem("resume_tailor_base_resume");
-        }
-      }
+      localStorage.removeItem("resume_tailor_base_resume");
     } catch (e) {
       console.error(e);
     }
