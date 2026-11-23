@@ -10,33 +10,30 @@ interface TemplateProps {
 }
 
 export const ClassicATSTemplate: React.FC<TemplateProps> = ({ resume }) => {
+  const contactParts: string[] = [];
+  if (resume.contact?.location) contactParts.push(resume.contact.location);
+  if (resume.contact?.phone) contactParts.push(resume.contact.phone);
+  if (resume.contact?.email) contactParts.push(resume.contact.email);
+  if (resume.contact?.linkedin) contactParts.push(resume.contact.linkedin);
+  if (resume.contact?.github) contactParts.push(resume.contact.github);
+
   return (
     <div className="bg-white text-black p-8 sm:p-10 font-serif leading-normal text-[13px] shadow-sm print:p-0 print:shadow-none min-h-[1050px]">
       {/* Header */}
-      <div className="text-center border-b border-black pb-3 mb-4">
-        <h1 className="text-2xl font-bold uppercase tracking-wider mb-1">
-          {resume.fullName}
-        </h1>
-        <div className="text-xs text-gray-800 space-x-2">
-          <span>{resume.contact.location}</span>
-          <span>|</span>
-          <span>{resume.contact.phone}</span>
-          <span>|</span>
-          <span>{resume.contact.email}</span>
-          {resume.contact.linkedin && (
-            <>
-              <span>|</span>
-              <span>{resume.contact.linkedin}</span>
-            </>
+      {(resume.fullName || contactParts.length > 0) && (
+        <div className="text-center border-b border-black pb-3 mb-4">
+          {resume.fullName && (
+            <h1 className="text-2xl font-bold uppercase tracking-wider mb-1">
+              {resume.fullName}
+            </h1>
           )}
-          {resume.contact.github && (
-            <>
-              <span>|</span>
-              <span>{resume.contact.github}</span>
-            </>
+          {contactParts.length > 0 && (
+            <div className="text-xs text-gray-800 space-x-2">
+              {contactParts.join(" | ")}
+            </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Summary */}
       {resume.summary && (

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ResumeData, ExperienceItem, EducationItem, SkillGroup } from "@/types/resume";
 import { parseResumeText } from "@/lib/parser";
-import { SAMPLE_BASE_RESUME } from "@/data/sampleData";
+import { SAMPLE_BASE_RESUME, EMPTY_RESUME } from "@/data/sampleData";
 import {
   FileText,
   CheckCircle2,
@@ -100,6 +100,13 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
   const handleUseSample = () => {
     onLoaded(SAMPLE_BASE_RESUME);
     setShowPasteBox(false);
+    setErrorMessage("");
+  };
+
+  const handleClearToBlank = () => {
+    onLoaded(EMPTY_RESUME);
+    setRawText("");
+    setShowPasteBox(true);
     setErrorMessage("");
   };
 
@@ -243,6 +250,18 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {hasLoadedResume && (
+            <button
+              type="button"
+              onClick={handleClearToBlank}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-semibold text-zinc-600 dark:text-zinc-300 transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Reset to blank resume"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Reset to Blank</span>
+            </button>
+          )}
+
           {!showPasteBox && (
             <button
               type="button"

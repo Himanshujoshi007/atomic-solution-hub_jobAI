@@ -10,24 +10,37 @@ interface TemplateProps {
 }
 
 export const ExecutiveImpactTemplate: React.FC<TemplateProps> = ({ resume }) => {
+  const contactParts: string[] = [];
+  if (resume.contact?.email) contactParts.push(resume.contact.email);
+  if (resume.contact?.phone) contactParts.push(resume.contact.phone);
+  if (resume.contact?.location) contactParts.push(resume.contact.location);
+  if (resume.contact?.linkedin) contactParts.push(resume.contact.linkedin);
+
   return (
     <div className="bg-white text-zinc-900 p-8 sm:p-10 font-sans leading-relaxed text-[13px] shadow-sm print:p-0 print:shadow-none min-h-[1050px]">
       {/* Top Banner Accent */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-900 pb-4 mb-5">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
-            {resume.fullName}
-          </h1>
-          <p className="text-xs font-semibold tracking-wide text-slate-600 mt-0.5">
-            Senior Software Engineering & System Architecture Leader
-          </p>
+      {(resume.fullName || resume.subtitle || contactParts.length > 0) && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-900 pb-4 mb-5">
+          <div>
+            {resume.fullName && (
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                {resume.fullName}
+              </h1>
+            )}
+            {resume.subtitle && (
+              <p className="text-xs font-semibold tracking-wide text-slate-600 mt-0.5">
+                {resume.subtitle}
+              </p>
+            )}
+          </div>
+          {contactParts.length > 0 && (
+            <div className="text-right text-xs text-slate-600 space-y-0.5 mt-2 sm:mt-0 font-medium">
+              <div>{contactParts.slice(0, 2).join(" • ")}</div>
+              {contactParts.slice(2).map((c, i) => <div key={i}>{c}</div>)}
+            </div>
+          )}
         </div>
-        <div className="text-right text-xs text-slate-600 space-y-0.5 mt-2 sm:mt-0 font-medium">
-          <div>{resume.contact.email} • {resume.contact.phone}</div>
-          <div>{resume.contact.location}</div>
-          {resume.contact.linkedin && <div className="text-slate-800">{resume.contact.linkedin}</div>}
-        </div>
-      </div>
+      )}
 
       {/* Executive Summary */}
       {resume.summary && (

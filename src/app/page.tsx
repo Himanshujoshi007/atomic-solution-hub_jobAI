@@ -7,7 +7,12 @@ import {
   TailoredResumeRecord,
   UserAccount,
 } from "@/types/resume";
-import { SAMPLE_BASE_RESUME, SAMPLE_JOB_DESCRIPTIONS } from "@/data/sampleData";
+import {
+  SAMPLE_BASE_RESUME,
+  SAMPLE_JOB_DESCRIPTIONS,
+  EMPTY_RESUME,
+  EMPTY_JOB_DESCRIPTIONS,
+} from "@/data/sampleData";
 import { storage } from "@/lib/storage";
 import { tailorResumeWithAI } from "@/lib/tailorEngine";
 import { exportElementToPDF, triggerNativePrint } from "@/lib/pdfExport";
@@ -61,40 +66,25 @@ export default function Home() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  // Resume & JDs State
-  const [baseResume, setBaseResume] = useState<ResumeData>(SAMPLE_BASE_RESUME);
-  const [activeResume, setActiveResume] = useState<ResumeData>(SAMPLE_BASE_RESUME);
-  const [jds, setJds] = useState<JobDescription[]>(SAMPLE_JOB_DESCRIPTIONS);
+  // Resume & JDs State - Completely blank by default
+  const [baseResume, setBaseResume] = useState<ResumeData>(EMPTY_RESUME);
+  const [activeResume, setActiveResume] = useState<ResumeData>(EMPTY_RESUME);
+  const [jds, setJds] = useState<JobDescription[]>(EMPTY_JOB_DESCRIPTIONS);
   const [selectedFormat, setSelectedFormat] = useState<
     "gemini-standard" | "modern-tech" | "classic-ats" | "executive-impact"
   >("gemini-standard");
 
-  // Tailoring & ATS Diff State
+  // Tailoring & ATS Diff State - Default empty until tailored
   const [isTailoring, setIsTailoring] = useState(false);
   const [highlightChanges, setHighlightChanges] = useState<boolean>(true);
   const [tailoredBullets, setTailoredBullets] = useState<string[]>([]);
   const [isSummaryChanged, setIsSummaryChanged] = useState<boolean>(false);
-  const [atsScore, setAtsScore] = useState<number>(95);
+  const [atsScore, setAtsScore] = useState<number>(0);
   const [atsFeedback, setAtsFeedback] = useState({
-    matchingKeywords: [
-      "Healthcare",
-      "PBM",
-      "Agile/Scrum",
-      "SQL",
-      "Product Roadmapping",
-      "PRDs",
-      "UAT",
-      "Microservices",
-    ],
-    missingKeywords: ["Regulatory Compliance & HIPAA", "FHIR / HL7"],
-    strengths: [
-      "100% of experience bullets refactored with Google X-Y-Z formula",
-      "Direct alignment with target enterprise architecture & delivery standards",
-      "Exact single-page Gemini ATS format with clean 1.5px black dividing rules",
-    ],
-    improvements: [
-      "Click '+ Add' to incorporate regulatory compliance keywords into competencies",
-    ],
+    matchingKeywords: [] as string[],
+    missingKeywords: [] as string[],
+    strengths: [] as string[],
+    improvements: [] as string[],
   });
 
   // Stage 4 View Mode & Zoom (Split / Full Editor / Full Preview)
@@ -114,32 +104,54 @@ export default function Home() {
     const savedRecords = storage.getRecords();
     setRecords(savedRecords);
 
-    const savedBase = storage.getBaseResume();
-    if (savedBase) {
-      try {
+    // Clean up any stale Alluri Sumanth profile from localStorage if present
+    try {
+      const savedBase = storage.getBaseResume();
+      if (savedBase) {
         const parsed = JSON.parse(savedBase);
-        setBaseResume(parsed);
-        setActiveResume(parsed);
-      } catch (e) {
-        console.error(e);
+        if (parsed?.fullName === "Alluri Sumanth") {
+          localStorage.removeItem("resume_tailor_base_resume");
+        }
       }
+    } catch (e) {
+      console.error(e);
     }
   }, []);
 
   // "New Start"
   const handleNewStart = () => {
     if (confirm("Start fresh from Step 1? Your saved records will remain in History.")) {
-      setBaseResume(SAMPLE_BASE_RESUME);
-      setActiveResume(SAMPLE_BASE_RESUME);
-      setJds(SAMPLE_JOB_DESCRIPTIONS);
+      setBaseResume(EMPTY_RESUME);
+      setActiveResume(EMPTY_RESUME);
+      setJds(EMPTY_JOB_DESCRIPTIONS);
       setTailoredBullets([]);
       setIsSummaryChanged(false);
+      setAtsScore(0);
+      setAtsFeedback({
+        matchingKeywords: [],
+        missingKeywords: [],
+        strengths: [],
+        improvements: [],
+      });
       setActiveTab("resume");
     }
   };
 
   // Step 3: Trigger AI Tailoring
   const handleGenerateTailoredResume = async () => {
+    if (!baseResume.fullName && (!baseResume.experience || baseResume.experience.length === 0)) {
+      alert("Please paste your resume in Step 1 before tailoring.");
+      setActiveTab("resume");
+      return;
+    }
+
+    const hasAnyJd = jds.some((j) => j.jdText && j.jdText.trim().length > 20);
+    if (!hasAnyJd) {
+      alert("Please paste at least one target job description in Step 2 before tailoring.");
+      setActiveTab("jds");
+      return;
+    }
+
     if (currentUser) {
       if (!currentUser.isActive) {
         alert("Your account is currently disabled. Please contact Admin.");
@@ -453,9 +465,23 @@ export default function Home() {
                   </div>
 
                   <div className="overflow-x-auto overflow-y-auto flex-1 p-4 flex justify-center items-start">
-                    <div className="shadow-xl bg-white mb-6 scale-90 sm:scale-100 origin-top">
-                      <GeminiStandardTemplate resume={activeResume} highlightChanges={false} />
-                    </div>
+                    {activeResume.fullName || (activeResume.experience && activeResume.experience.length > 0) || activeResume.summary ? (
+                      <div className="shadow-xl bg-white mb-6 scale-90 sm:scale-100 origin-top">
+                        <GeminiStandardTemplate resume={activeResume} highlightChanges={false} />
+                      </div>
+                    ) : (
+                      <div className="w-full max-w-[210mm] min-h-[460px] border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-3xl p-10 flex flex-col items-center justify-center text-center bg-white/60 dark:bg-zinc-900/60">
+                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4 shadow-sm">
+                          <FileText className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-base font-bold text-zinc-800 dark:text-white">
+                          Blank Resume Canvas Ready
+                        </h3>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mt-2 leading-relaxed">
+                          Paste your resume on the left to immediately inspect decoded sections and see your single-page ATS formatted document live here.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -547,14 +573,28 @@ export default function Home() {
                   </div>
 
                   <div className="overflow-x-auto overflow-y-auto flex-1 p-4 flex justify-center items-start">
-                    <div className="shadow-xl bg-white mb-6 scale-90 sm:scale-100 origin-top">
-                      <GeminiStandardTemplate
-                        resume={activeResume}
-                        highlightChanges={highlightChanges}
-                        tailoredBullets={tailoredBullets}
-                        isSummaryChanged={isSummaryChanged}
-                      />
-                    </div>
+                    {activeResume.fullName || (activeResume.experience && activeResume.experience.length > 0) || activeResume.summary ? (
+                      <div className="shadow-xl bg-white mb-6 scale-90 sm:scale-100 origin-top">
+                        <GeminiStandardTemplate
+                          resume={activeResume}
+                          highlightChanges={highlightChanges}
+                          tailoredBullets={tailoredBullets}
+                          isSummaryChanged={isSummaryChanged}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full max-w-[210mm] min-h-[460px] border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-3xl p-10 flex flex-col items-center justify-center text-center bg-white/60 dark:bg-zinc-900/60">
+                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4 shadow-sm">
+                          <FileText className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-base font-bold text-zinc-800 dark:text-white">
+                          No Tailored Resume Generated Yet
+                        </h3>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mt-2 leading-relaxed">
+                          Paste your resume in Step 1 and target JDs in Step 2, then click &ldquo;Tailor Resume Now (AI)&rdquo; above to generate and inspect your tailored ATS resume here.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

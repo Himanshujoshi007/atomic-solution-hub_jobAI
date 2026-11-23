@@ -60,15 +60,21 @@ export const GeminiStandardTemplate: React.FC<TemplateProps> = ({
       }}
     >
       {/* 1. Header (Name + Contact Bar — no underline, 6pt spacing below) */}
-      <header className="mb-[6pt]">
-        <h1 className="text-[16pt] font-bold text-center m-0 leading-tight text-black tracking-normal">
-          {resume.fullName || "Candidate Name"}
-        </h1>
+      {(resume.fullName || contactParts.length > 0) && (
+        <header className="mb-[6pt]">
+          {resume.fullName && (
+            <h1 className="text-[16pt] font-bold text-center m-0 leading-tight text-black tracking-normal">
+              {resume.fullName}
+            </h1>
+          )}
 
-        <div className="text-center text-[9pt] leading-tight text-black mt-[2pt]">
-          {contactParts.join(" | ")}
-        </div>
-      </header>
+          {contactParts.length > 0 && (
+            <div className="text-center text-[9pt] leading-tight text-black mt-[2pt]">
+              {contactParts.join(" | ")}
+            </div>
+          )}
+        </header>
+      )}
 
       {/* 2. Summary (show_title: true, single paragraph, justified) */}
       {resume.summary && (

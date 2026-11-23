@@ -1,4 +1,37 @@
-import { ResumeData } from "@/types/resume";
+import { ResumeData, JobDescription } from "@/types/resume";
+
+export const EMPTY_RESUME: ResumeData = {
+  fullName: "",
+  subtitle: "",
+  contact: {
+    email: "",
+    phone: "",
+    location: "",
+    linkedin: "",
+    github: "",
+  },
+  summary: "",
+  skills: {
+    languages: [],
+    frameworks: [],
+    developerTools: [],
+    librariesOrCloud: [],
+  },
+  skillGroups: [],
+  experience: [],
+  education: [],
+  projects: [],
+  certifications: [],
+};
+
+export const EMPTY_JOB_DESCRIPTIONS: JobDescription[] = [
+  {
+    id: "jd-1",
+    companyName: "",
+    roleTitle: "",
+    jdText: "",
+  },
+];
 
 export const SAMPLE_BASE_RESUME: ResumeData = {
   fullName: "Alluri Sumanth",
@@ -38,63 +71,59 @@ export const SAMPLE_BASE_RESUME: ResumeData = {
   experience: [
     {
       id: "exp-1",
-      company: "Evernorth Health Services",
-      role: "Associate Product Manager (PBM & Health Tech Solutions)",
-      location: "MO, USA",
-      startDate: "03/2025",
+      company: "Cigna Healthcare",
+      role: "Associate Product Manager",
+      location: "St. Louis, MO, USA",
+      startDate: "08/2022",
       endDate: "Present",
       bullets: [
-        "Collaborated with cross-functional PMs, engineers, and UX designers to accelerate the delivery of complex enterprise health platform features, achieving a targeted 25% reduction in overall product development life cycles.",
-        "Created and managed a 15-month rolling product roadmap, effectively aligning stakeholder expectations and business needs, resulting in a 30% increase in on-time feature deployments across the entire PBM product portfolio.",
-        "Led backlog refinement, epic planning, and Agile events via Jira, optimizing project execution workflows and decreasing sprint carryover by 20% while concurrently increasing overall engineering team velocity by 15%.",
-        "Analyzed complex product data utilizing SQL and Excel to derive highly actionable insights, successfully guiding backlog prioritization and driving a 40% improvement in post-release optimization for targeted health plan products.",
-        "Conducted comprehensive pre-release and post-release user testing to ensure optimal functionality, publishing value-driven release notes that successfully reduced post-deployment client support tickets by 35% within the first operational month.",
-        "Presented strategic roadmap updates and critical product delivery risks to senior leadership, ensuring strict alignment with business objectives and achieving a 98% compliance rate with internal enterprise healthcare standards.",
+        "Led cross-functional teams of 12 engineers and designers to launch healthcare provider tools, improving claims processing speed by 35% across 45,000 daily active users.",
+        "Authored 45+ comprehensive PRDs, BRDs, and user story maps, cutting sprint carryover by 22% and expediting bi-weekly releases.",
+        "Executed SQL queries and data analysis on patient portal interaction metrics to identify drop-off bottlenecks, increasing task completion rate by 18%.",
+        "Coordinated with compliance and legal stakeholders to guarantee 100% HIPAA and SOC2 adherence across core patient record pipelines.",
       ],
     },
     {
       id: "exp-2",
-      company: "Novartis",
-      role: "Product Analyst / Project Coordinator",
-      location: "Hyderabad, Telangana, India",
-      startDate: "08/2020",
-      endDate: "12/2023",
+      company: "Evernorth Health Services",
+      role: "Product Analyst / Technical Specialist",
+      location: "St. Louis, MO, USA",
+      startDate: "06/2020",
+      endDate: "07/2022",
       bullets: [
-        "Partnered closely with go-to-market teams to identify critical value-add opportunities, translating complex healthcare operational challenges into viable product solutions that increased user adoption rates by 22% within one quarter.",
-        "Collaborated seamlessly with design teams to conduct targeted user experience research and testing, integrating feedback from internal stakeholders to improve overall user satisfaction scores by a measurable 18% margin.",
-        "Managed conflicting priorities in a strict deadline-driven environment, driving seamless cross-functional collaboration between technical and non-technical teams to achieve a 95% on-time milestone completion rate for key product initiatives.",
-        "Leveraged Python and advanced data visualization tools to meticulously evaluate product performance metrics, identifying critical workflow bottlenecks and driving a 15% increase in operational efficiency across cross-functional internal teams.",
-        "Supported business requirements by actively monitoring quality metrics and compliance standards, ensuring strict adherence to healthcare regulations and reducing internal audit discrepancies by 30% over a two-year performance period.",
+        "Developed automated Tableau performance dashboards tracking API latency, reducing recurring incident triage time by 40%.",
+        "Conducted end-to-end UAT and regression test plans for 8 major pharmacy benefit integration cycles.",
+        "Facilitated weekly backlog refinement sessions and daily standups using Jira, ensuring on-time delivery of priority epics.",
       ],
     },
   ],
   education: [
     {
       id: "edu-1",
-      institution: "Saint Louis University, St. Louis, MO, USA",
-      degree: "Master's Degree",
-      field: "Project Management",
-      startDate: "01/2024",
-      endDate: "12/2025",
+      institution: "Washington University in St. Louis, MO, USA",
+      degree: "Master of Science",
+      field: "Information Systems & Analytics",
+      startDate: "08/2020",
+      endDate: "05/2022",
     },
     {
       id: "edu-2",
-      institution: "St. Peters Engineering College, Hyderabad, Telangana, India",
-      degree: "Bachelor's Degree",
-      field: "Mechanical Engineering",
-      startDate: "08/2018",
-      endDate: "08/2022",
+      institution: "JNTU Hyderabad, India",
+      degree: "Bachelor of Technology",
+      field: "Computer Science and Engineering",
+      startDate: "08/2016",
+      endDate: "05/2020",
     },
   ],
   certifications: [
-    "Certified Scrum Product Owner (CSPO) – Preferred Qualification Alignment",
+    "Certified Scrum Product Owner (CSPO)",
     "Google Project Management Professional Certificate",
-    "Business Intelligence Analyst Certification",
+    "AWS Certified Cloud Practitioner",
   ],
   projects: [],
 };
 
-export const SAMPLE_JOB_DESCRIPTIONS = [
+export const SAMPLE_JOB_DESCRIPTIONS: JobDescription[] = [
   {
     id: "jd-1",
     companyName: "Cigna Healthcare",

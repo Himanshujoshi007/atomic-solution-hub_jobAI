@@ -16,6 +16,7 @@ import {
   LayoutGrid,
   ListFilter,
   CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 
 interface MultiJDInputProps {
@@ -167,6 +168,26 @@ export const MultiJDInput: React.FC<MultiJDInputProps> = ({
           <span className="text-xs font-semibold px-3 py-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
             {jds.length} / {maxJds} JDs Loaded
           </span>
+
+          <button
+            type="button"
+            onClick={() => {
+              onChange([
+                {
+                  id: `jd-${Date.now()}`,
+                  companyName: "",
+                  roleTitle: "",
+                  jdText: "",
+                },
+              ]);
+              setActiveTab(0);
+            }}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-all cursor-pointer"
+            title="Reset to blank JD"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
+            <span>Reset to Blank</span>
+          </button>
 
           <button
             type="button"

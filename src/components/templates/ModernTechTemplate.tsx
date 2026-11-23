@@ -10,33 +10,30 @@ interface TemplateProps {
 }
 
 export const ModernTechTemplate: React.FC<TemplateProps> = ({ resume, isEditing, onUpdate }) => {
+  const contactParts: string[] = [];
+  if (resume.contact?.email) contactParts.push(resume.contact.email);
+  if (resume.contact?.phone) contactParts.push(resume.contact.phone);
+  if (resume.contact?.location) contactParts.push(resume.contact.location);
+  if (resume.contact?.linkedin) contactParts.push(resume.contact.linkedin);
+  if (resume.contact?.github) contactParts.push(resume.contact.github);
+
   return (
     <div className="bg-white text-slate-800 p-8 sm:p-10 font-sans shadow-sm leading-relaxed text-[13px] print:p-0 print:shadow-none min-h-[1050px]">
       {/* Header */}
-      <div className="border-b-2 border-indigo-600 pb-4 mb-5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-1.5 uppercase">
-          {resume.fullName}
-        </h1>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-600 text-xs font-medium">
-          <span>{resume.contact.email}</span>
-          <span>•</span>
-          <span>{resume.contact.phone}</span>
-          <span>•</span>
-          <span>{resume.contact.location}</span>
-          {resume.contact.linkedin && (
-            <>
-              <span>•</span>
-              <span className="text-indigo-600">{resume.contact.linkedin}</span>
-            </>
+      {(resume.fullName || contactParts.length > 0) && (
+        <div className="border-b-2 border-indigo-600 pb-4 mb-5">
+          {resume.fullName && (
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-1.5 uppercase">
+              {resume.fullName}
+            </h1>
           )}
-          {resume.contact.github && (
-            <>
-              <span>•</span>
-              <span className="text-indigo-600">{resume.contact.github}</span>
-            </>
+          {contactParts.length > 0 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-600 text-xs font-medium">
+              {contactParts.join(" • ")}
+            </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Summary */}
       {resume.summary && (
