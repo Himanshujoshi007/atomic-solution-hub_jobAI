@@ -1,0 +1,98 @@
+{
+  "format_name": "Single-Page Compact ATS Monochrome Layout",
+  "page_setup": {
+    "page_count": 1,
+    "page_size": "A4 / Letter",
+    "margins": {
+      "top": "4mm",
+      "bottom": "4mm",
+      "left": "5mm",
+      "right": "5mm"
+    },
+    "color_scheme": {
+      "theme": "Monochrome",
+      "primary_text": "#000000",
+      "divider_color": "#000000",
+      "background": "#FFFFFF"
+    }
+  },
+  "typography": {
+    "font_family": "Sans-Serif (Calibri / Arial / Inter)",
+    "candidate_name": {
+      "font_size": "16pt",
+      "font_weight": "bold",
+      "alignment": "center",
+      "bottom_divider": false
+    },
+    "contact_bar": {
+      "font_size": "9pt",
+      "alignment": "center",
+      "separator": " | ",
+      "bottom_divider": false,
+      "bottom_spacing": "6pt"
+    },
+    "section_headings": {
+      "font_size": "11pt",
+      "font_weight": "bold",
+      "text_transform": "Title Case",
+      "alignment": "left",
+      "bottom_border": {
+        "enabled": true,
+        "thickness": "1.5pt",
+        "style": "solid",
+        "color": "#000000"
+      },
+      "margin_top": "5pt",
+      "margin_bottom": "3pt"
+    },
+    "body_and_bullets": {
+      "font_size": "9pt",
+      "font_weight": "normal",
+      "line_height": 1.15,
+      "text_alignment": "justify",
+      "bullet_indent": "10pt",
+      "bullet_spacing": "1.5pt"
+    }
+  },
+  "section_order": [
+    "Header (Name + Contact Bar — no underline)",
+    "Summary",
+    "Technical Skills",
+    "Certifications & Achievements",
+    "Professional Experience",
+    "Education"
+  ],
+  "section_rules": {
+    "header": {
+      "fields": ["Full Name", "Email Label", "Phone", "City, State, Country", "LinkedIn"],
+      "divider_below": false,
+      "blank_space_below": true
+    },
+    "summary": {
+      "show_title": true,
+      "layout": "single_paragraph",
+      "alignment": "justify"
+    },
+    "technical_skills": {
+      "layout": "categorized_lines",
+      "category_label_style": "bold",
+      "alignment": "justify"
+    },
+    "certifications_and_achievements": {
+      "layout": "inline_single_block",
+      "item_separator": " | ",
+      "alignment": "justify"
+    },
+    "professional_experience": {
+      "header_row": "Role Title | Company Name (Left) — Short-Month Date Range | Location (Right)",
+      "sub_header_row": "Project: Project Title (Bold/Italic)",
+      "date_format": "MMM YYYY – MMM YYYY (e.g., Aug 2025 – Present)",
+      "bullet_alignment": "justify"
+    },
+    "education": {
+      "header_row": "Institution Name — Location (Left) — Short-Month Date Range (Right)",
+      "sub_row": "Degree Title",
+      "date_format": "MMM YYYY – MMM YYYY"
+    }
+  }
+}
