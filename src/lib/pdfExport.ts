@@ -2,7 +2,7 @@ import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 
 /**
- * High-precision PDF exporter using html-to-image.
+ * High-precision PDF exporter using html-to-image with vector native print fallback.
  * Natively supports modern CSS color spaces (lab, oklch, color-mix) without crashing.
  */
 export async function exportElementToPDF(elementId: string, filename: string): Promise<void> {
@@ -61,17 +61,14 @@ export async function exportElementToPDF(elementId: string, filename: string): P
     const cleanFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
     pdf.save(cleanFilename);
   } catch (err: any) {
-    console.warn("html-to-image export encountered error, attempting fallback print:", err);
-    // Fallback: Trigger native browser high-fidelity print dialog
+    console.warn("Direct raster download encountered error, triggering vector print dialog:", err);
+    // Smooth fallback: Open vector browser print dialog with full CSS styling
     triggerNativePrint(elementId);
-    throw new Error(
-      "Direct raster download failed (" + (err.message || "Renderer error") + "). Opened browser Print dialog as fallback."
-    );
   }
 }
 
 /**
- * Triggers native browser print with vector fidelity and selectable text.
+ * Triggers native browser print with vector fidelity, selectable text, and full cloned styles.
  */
 export function triggerNativePrint(elementId: string): void {
   const element = document.getElementById(elementId);
@@ -89,27 +86,34 @@ export function triggerNativePrint(elementId: string): void {
   const doc = printIframe.contentDocument || printIframe.contentWindow?.document;
   if (!doc) return;
 
+  // Clone all styles and links from main document so Tailwind and typography are exact
+  const styleNodes = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"));
+  const clonedStyles = styleNodes.map((s) => s.outerHTML).join("\n");
+
   doc.open();
   doc.write(`
     <!DOCTYPE html>
     <html>
       <head>
         <title>Resume</title>
+        ${clonedStyles}
         <style>
-          @page { size: A4 portrait; margin: 0; }
-          body { margin: 0; padding: 0; background: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+          @page { size: A4 portrait; margin: 4mm 5mm; }
+          body { margin: 0; padding: 0; background: #ffffff !important; color: #000000 !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
           .no-print { display: none !important; }
         </style>
       </head>
       <body>
-        ${element.outerHTML}
+        <div style="width: 200mm; margin: 0 auto; background: #fff;">
+          ${element.innerHTML}
+        </div>
         <script>
           window.onload = function() {
             setTimeout(function() {
               window.focus();
               window.print();
-            }, 250);
+            }, 300);
           };
         </script>
       </body>
@@ -118,6 +122,8 @@ export function triggerNativePrint(elementId: string): void {
   doc.close();
 
   setTimeout(() => {
-    document.body.removeChild(printIframe);
-  }, 2000);
+    try {
+      document.body.removeChild(printIframe);
+    } catch {}
+  }, 3500);
 }

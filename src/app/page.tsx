@@ -264,7 +264,8 @@ export default function Home() {
     } catch (err: any) {
       setHighlightChanges(prevHighlight);
       setIsDownloading(false);
-      alert("PDF generation notice: " + err.message);
+      console.warn("PDF export notice:", err);
+      triggerNativePrint("resume-preview-sheet");
     }
   };
 

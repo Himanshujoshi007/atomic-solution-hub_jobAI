@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { JobDescription } from "@/types/resume";
 import { extractCompanyAndRoleFromJD, cleanCompanyName } from "@/lib/parser";
 import {
@@ -34,6 +34,7 @@ export const MultiJDInput: React.FC<MultiJDInputProps> = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const [autoDetected, setAutoDetected] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const scrollDeckRef = useRef<HTMLDivElement>(null);
 
   const addJd = () => {
     if (jds.length >= maxJds) return;
@@ -179,15 +180,30 @@ export const MultiJDInput: React.FC<MultiJDInputProps> = ({
         </div>
       </div>
 
-      {/* 1. Horizontal Scrollable JD Deck Selector */}
-      <div className="relative">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
+            {/* 1. Horizontal Scrollable JD Deck Selector with Quick Navigation */}
+      <div className="relative flex items-center gap-1.5">
+        {/* Scroll Left Button */}
+        <button
+          type="button"
+          onClick={() => scrollDeckRef.current?.scrollBy({ left: -220, behavior: "smooth" })}
+          className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-all shrink-0 cursor-pointer shadow-xs"
+          title="Scroll JDs Left"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        {/* Scrollable Pills Deck */}
+        <div
+          ref={scrollDeckRef}
+          className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none scroll-smooth flex-1"
+        >
           {jds.map((jd, idx) => {
             const isActive = idx === activeTab;
-            const companyDisplay = jd.companyName.trim()
-              ? jd.companyName.length > 20
-                ? `${jd.companyName.slice(0, 20)}...`
-                : jd.companyName
+            const cleanedCompany = cleanCompanyName(jd.companyName);
+            const companyDisplay = cleanedCompany.trim()
+              ? cleanedCompany.length > 16
+                ? `${cleanedCompany.slice(0, 16)}...`
+                : cleanedCompany
               : `JD #${idx + 1}`;
 
             return (
@@ -204,9 +220,9 @@ export const MultiJDInput: React.FC<MultiJDInputProps> = ({
                 }`}
               >
                 <div className="flex flex-col text-left">
-                  <span>{companyDisplay}</span>
+                  <span className="truncate max-w-[120px]">{companyDisplay}</span>
                   {jd.roleTitle && (
-                    <span className="text-[10px] font-normal opacity-75 truncate max-w-[140px]">
+                    <span className="text-[10px] font-normal opacity-75 truncate max-w-[120px]">
                       {jd.roleTitle}
                     </span>
                   )}
@@ -229,6 +245,16 @@ export const MultiJDInput: React.FC<MultiJDInputProps> = ({
             );
           })}
         </div>
+
+        {/* Scroll Right Button */}
+        <button
+          type="button"
+          onClick={() => scrollDeckRef.current?.scrollBy({ left: 220, behavior: "smooth" })}
+          className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-all shrink-0 cursor-pointer shadow-xs"
+          title="Scroll JDs Right"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
       {/* 2. All JDs Overview List (When List view mode is selected) */}

@@ -53,18 +53,26 @@ export const ClassicATSTemplate: React.FC<TemplateProps> = ({ resume }) => {
         <h2 className="text-xs font-bold uppercase border-b border-gray-400 pb-0.5 mb-2 tracking-wider">
           Education
         </h2>
-        {resume.education.map((edu) => (
-          <div key={edu.id} className="mb-1.5 text-xs">
-            <div className="flex justify-between font-bold">
-              <span>{edu.institution}</span>
-              <span>{edu.startDate} – {edu.endDate}</span>
+        {resume.education.map((edu) => {
+          const displayDegree =
+            edu.degree && !/^(degree|degree title)?$/i.test(edu.degree.trim())
+              ? edu.degree
+              : "";
+          return (
+            <div key={edu.id} className="mb-1.5 text-xs">
+              <div className="flex justify-between font-bold">
+                <span>{edu.institution}</span>
+                <span>{edu.startDate} – {edu.endDate}</span>
+              </div>
+              {displayDegree && (
+                <div className="flex justify-between italic">
+                  <span>{displayDegree}{edu.field && !displayDegree.includes(edu.field) ? `, ${edu.field}` : ""}</span>
+                  {edu.gpa && <span>GPA: {edu.gpa}</span>}
+                </div>
+              )}
             </div>
-            <div className="flex justify-between italic">
-              <span>{edu.degree}{edu.field && `, ${edu.field}`}</span>
-              {edu.gpa && <span>GPA: {edu.gpa}</span>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Technical Skills */}

@@ -593,102 +593,115 @@ function parseExperienceSection(
 
 /**
  * Parses education lines handling both single-line and two-line formats
- * with real degree titles and institution names.
+ * with real degree titles and institution names, without generic placeholder words.
  */
+function cleanDegreeTitle(raw: string): string {
+  return raw
+    .replace(/\b\d{1,2}\/\d{4}\b/g, "")
+    .replace(/\b\d{4}\b/g, "")
+    .replace(/^[–—|:,•\s-]+|[–—|:,•\s-]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function parseEducationLines(lines: string[]): EducationItem[] {
   const DEGREE_REGEX =
     /\b(Bachelor|Master|Doctor|Associate|B\.?Tech|B\.?E|M\.?S|M\.?Tech|M\.?E|Ph\.?D|MBA|Diploma|B\.?S|M\.?A|B\.?A|Postgraduate|Undergraduate)\b/i;
   const INSTITUTION_REGEX =
     /\b(University|College|Institute|School|Academy|Polytechnic)\b/i;
   const DATE_REGEX =
-    /(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:\d{2}\/|\b)?(\d{4})\s*[-–—to\s]+\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:\d{2}\/|\b)?(\d{4}|Present|Current)/i;
+    /(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:\d{1,2}\/|\b)?(\d{4})\s*[-–—to\s]+\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:\d{1,2}\/|\b)?(\d{4}|Present|Current)/i;
+  const SINGLE_DATE_REGEX =
+    /(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*)?(?:\d{1,2}\/)?(\d{4})/i;
 
   const results: EducationItem[] = [];
-  let pendingDegree = "";
-  let pendingDates = "";
-  let pendingInst = "";
+  let current: { institution: string; degree: string; dates: string } | null = null;
+
+  const pushEdu = (item: { institution: string; degree: string; dates: string }) => {
+    if (!item.institution && !item.degree) return;
+    const dParts = item.dates
+      ? item.dates.split(/\s*(?:[-–—]|\bto\b)\s*/i).map((s) => s.trim()).filter(Boolean)
+      : [];
+
+    results.push({
+      id: `edu-${Date.now()}-${results.length}`,
+      institution: item.institution || "University",
+      degree: item.degree || "",
+      startDate: dParts[0] || "",
+      endDate: dParts[1] || dParts[dParts.length - 1] || "",
+    });
+  };
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line || line.toUpperCase() === "EDUCATION") continue;
+    const rawLine = lines[i].trim();
+    if (!rawLine || /^education$/i.test(rawLine)) continue;
 
-    const dateMatch = line.match(DATE_REGEX);
-    const dateStr = dateMatch ? dateMatch[0] : "";
-    const textNoDate = dateMatch
-      ? line.replace(dateMatch[0], "").replace(/[-–|,]+$/, "").trim()
-      : line;
+    const dateMatch = rawLine.match(DATE_REGEX);
+    let dateStr = dateMatch ? dateMatch[0] : "";
+    let textNoDate = dateMatch
+      ? rawLine.replace(dateMatch[0], "").replace(/[-–|,]+$/, "").trim()
+      : rawLine;
+
+    if (!dateStr) {
+      const singleMatch = textNoDate.match(SINGLE_DATE_REGEX);
+      if (singleMatch && !INSTITUTION_REGEX.test(singleMatch[0])) {
+        // standalone date string
+      }
+    }
 
     const hasDegree = DEGREE_REGEX.test(textNoDate);
     const hasInst = INSTITUTION_REGEX.test(textNoDate);
 
-    // Single-line format: e.g. 'Rowan University, Glassboro, USA – Master of Science in Mechanical Engineering Sep 2023 – May 2025'
+    // Single-line format: e.g. 'Rowan University – Master of Science 2023 – 2025'
     if (hasDegree && hasInst) {
+      if (current) {
+        pushEdu(current);
+        current = null;
+      }
       const parts = textNoDate.split(/\s*[-–—|]\s*/);
       let inst = parts[0];
-      let deg = parts[1] || "Degree";
+      let deg = parts[1] || "";
       if (DEGREE_REGEX.test(parts[0]) && !INSTITUTION_REGEX.test(parts[0])) {
         deg = parts[0];
-        inst = parts[1] || "University";
+        inst = parts[1] || "";
       }
-
-      const dateParts = dateStr.split(/\s*(?:[-–—]|\bto\b)\s*/i).map((s) => s.trim()).filter(Boolean);
-      results.push({
-        id: `edu-${Date.now()}-${results.length}`,
+      current = {
         institution: inst.trim(),
-        degree: deg.trim(),
-        startDate: dateParts[0] || "2018",
-        endDate: dateParts[1] || dateParts[dateParts.length - 1] || "2022",
-      });
-      continue;
-    }
-
-    // Two-line format:
-    // Line 1: 'Master of Science (M.S.) in Cyber Security 08/2023 – 05/2025'
-    // Line 2: 'Yeshiva University, New York, USA'
-    if (hasDegree && !hasInst) {
-      if (pendingDegree) {
-        const dParts = pendingDates.split(/\s*(?:[-–—]|\bto\b)\s*/i).map((s) => s.trim()).filter(Boolean);
-        results.push({
-          id: `edu-${Date.now()}-${results.length}`,
-          degree: pendingDegree,
-          institution: pendingInst || "University",
-          startDate: dParts[0] || "2018",
-          endDate: dParts[1] || dParts[dParts.length - 1] || "2022",
-        });
-        pendingInst = "";
-      }
-      pendingDegree = textNoDate;
-      pendingDates = dateStr;
-    } else if (hasInst && !hasDegree) {
-      if (pendingDegree) {
-        const dParts = (pendingDates || dateStr).split(/\s*(?:[-–—]|\bto\b)\s*/i).map((s) => s.trim()).filter(Boolean);
-        results.push({
-          id: `edu-${Date.now()}-${results.length}`,
-          degree: pendingDegree,
-          institution: textNoDate,
-          startDate: dParts[0] || "2018",
-          endDate: dParts[1] || dParts[dParts.length - 1] || "2022",
-        });
-        pendingDegree = "";
-        pendingDates = "";
+        degree: cleanDegreeTitle(deg),
+        dates: dateStr,
+      };
+    } else if (hasInst) {
+      if (current && !current.institution) {
+        current.institution = textNoDate.trim();
+        if (dateStr && !current.dates) current.dates = dateStr;
       } else {
-        pendingInst = textNoDate;
-        pendingDates = dateStr;
+        if (current) pushEdu(current);
+        current = {
+          institution: textNoDate.trim(),
+          degree: "",
+          dates: dateStr,
+        };
       }
-    } else if (pendingDegree || pendingInst) {
-      if (dateStr && !pendingDates) pendingDates = dateStr;
+    } else if (hasDegree) {
+      const cleanDeg = cleanDegreeTitle(textNoDate);
+      if (current && !current.degree) {
+        current.degree = cleanDeg;
+        if (dateStr && !current.dates) current.dates = dateStr;
+      } else {
+        if (current) pushEdu(current);
+        current = {
+          institution: "",
+          degree: cleanDeg,
+          dates: dateStr,
+        };
+      }
+    } else if (dateStr && current && !current.dates) {
+      current.dates = dateStr;
     }
   }
 
-  if (pendingDegree || pendingInst) {
-    const dParts = pendingDates.split(/\s*(?:[-–—]|\bto\b)\s*/i).map((s) => s.trim()).filter(Boolean);
-    results.push({
-      id: `edu-${Date.now()}-${results.length}`,
-      degree: pendingDegree || "Bachelor of Science",
-      institution: pendingInst || "University",
-      startDate: dParts[0] || "2018",
-      endDate: dParts[1] || dParts[dParts.length - 1] || "2022",
-    });
+  if (current) {
+    pushEdu(current);
   }
 
   return results;

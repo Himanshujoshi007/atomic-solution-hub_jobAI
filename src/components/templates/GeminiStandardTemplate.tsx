@@ -245,24 +245,36 @@ export const GeminiStandardTemplate: React.FC<TemplateProps> = ({
             Education
           </h2>
           <div className="space-y-[2pt]">
-            {resume.education.map((edu) => (
-              <div key={edu.id} className="mb-[2pt]">
-                {/* Header Row: Institution Name — Location (Left) — Date Range (Right) */}
-                <div className="flex justify-between items-baseline text-[9pt] font-bold text-black">
-                  <span>
-                    {edu.institution}
-                    {edu.field ? ` — ${edu.field}` : ""}
-                  </span>
-                  <span className="font-bold shrink-0 ml-2">
-                    {formatShortMonthRange(edu.startDate, edu.endDate)}
-                  </span>
+            {resume.education.map((edu) => {
+              const displayDegree =
+                edu.degree && !/^(degree|degree title)?$/i.test(edu.degree.trim())
+                  ? edu.degree
+                  : "";
+              const dateRange = formatShortMonthRange(edu.startDate, edu.endDate);
+
+              return (
+                <div key={edu.id} className="mb-[2pt]">
+                  {/* Header Row: Institution Name — Location (Left) — Date Range (Right) */}
+                  <div className="flex justify-between items-baseline text-[9pt] font-bold text-black">
+                    <span>
+                      {edu.institution}
+                      {edu.field && !displayDegree.includes(edu.field) ? ` — ${edu.field}` : ""}
+                    </span>
+                    {dateRange && (
+                      <span className="font-bold shrink-0 ml-2">
+                        {dateRange}
+                      </span>
+                    )}
+                  </div>
+                  {/* Sub Row: Degree Title */}
+                  {displayDegree && (
+                    <div className="text-[9pt] text-black">
+                      {displayDegree}
+                    </div>
+                  )}
                 </div>
-                {/* Sub Row: Degree Title */}
-                <div className="text-[9pt] text-black">
-                  {edu.degree}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
